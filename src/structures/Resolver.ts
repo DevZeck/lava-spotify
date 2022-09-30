@@ -81,6 +81,25 @@ export default class Resolver {
             return this.buildResponse(e.body?.error.message === "invalid id" ? "NO_MATCHES" : "LOAD_FAILED", [], undefined, e.body?.error.message ?? e.message);
         }
     }
+    
+      public async searchTracks(query: string): Promise<LavalinkTrackResponse> {
+        try {
+            if (!this.token) throw new Error("No Spotify access token.");
+            // @ts-expect-error 2322
+            const { body: spotifyTrack }: { body: SpotifyTrack } = await request
+                .get(`${this.client.baseURL}/search/?q="${query}"&type=artist,album,track`)
+                .set("Authorization", this.token);
+
+            const unresolvedTrack = this.buildUnresolved(spotifyTrack);
+
+            return this.buildResponse(
+                "TRACK_LOADED",
+                this.autoResolve ? [await unresolvedTrack.resolve()] as LavalinkTrack[] : [unresolvedTrack]
+            );
+        } catch (e) {
+            return this.buildResponse(e.body?.error.message === "invalid id" ? "NO_MATCHES" : "LOAD_FAILED", [], undefined, e.body?.error.message ?? e.message);
+        }
+    }
 
     private async getPlaylistTracks(spotifyPlaylist: SpotifyPlaylist): Promise<void> {
         let nextPage = spotifyPlaylist.tracks.next;
