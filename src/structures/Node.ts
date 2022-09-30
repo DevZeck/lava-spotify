@@ -16,7 +16,9 @@ export default class Node {
         playlist: this.resolver.getPlaylist.bind(this.resolver),
         track: this.resolver.getTrack.bind(this.resolver)
     };
-
+    private readonly searchOptions = {
+        search: this.resolver.searchTracks.bind(this.resolver)
+    };
     public constructor(public client: LavasfyClient, options: NodeOptions) {
         Object.defineProperties(this, {
             id: { value: options.id, enumerable: true },
@@ -31,6 +33,9 @@ export default class Node {
      * A method for loading Spotify URLs
      * @returns Lavalink-like /loadtracks response
      */
+    public search(query: string): Promise<LavalinkTrackResponse> {
+        return this.searchOptions.search(query)
+    }
     public load(url: string): Promise<LavalinkTrackResponse> {
         const [, type, id] = this.client.spotifyPattern.exec(url) ?? [];
         return this.methods[type as keyof Node["methods"]](id);
